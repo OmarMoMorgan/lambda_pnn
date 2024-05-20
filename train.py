@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from network import LPNN
+from new_model import EfficientNet
 from loss import StructuralLoss
 
 from tools.spectral_tools import gen_mtf
@@ -28,7 +29,8 @@ def training_l_pnn(args):
     number_files_validation_zone_cross = 24
 
     basepath = args.input
-    method = 'L-PNN'
+    #method = 'L-PNN'
+    method  = args.method
     sensor = args.sensor
     out_dir = os.path.join(args.out_dir, sensor, method)
     epochs = args.epochs
@@ -138,7 +140,10 @@ def training_l_pnn(args):
                                prefetch_factor=2, persistent_workers=True)
 
     # Network definition
-    net = LPNN(nbands + 1).to(device)
+    if 'Enet' in method:
+        net = EfficientNet('b2',(nbands + 1)).to(device)
+    else:
+        net = LPNN(nbands + 1).to(device)
 
     # Optimizer definition
     optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=1e-4)
@@ -430,6 +435,10 @@ For further information, please contact the first author by email: matteo.ciotol
 
     optional.add_argument("--epochs", type=int, default=-1, help='Number of the epochs with which perform the '
                                                                  'training of the algorithm.')
+    
+
+    required.add_argument('-m', '--method', type=str, required=True, choices=["L-PNN","ENet-V5"],
+                               default="L-PNN", help='The algorithm with which perform Pansharpening.')
 
     parser._action_groups.append(optional)
     arguments = parser.parse_args()
